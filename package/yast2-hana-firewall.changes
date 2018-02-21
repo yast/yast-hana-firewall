@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Mar  2 11:06:58 UTC 2018 - hguo@suse.com
+
+- Upgrade to upstream release 2.0.0 that enables user to assign
+  services to firewall zones. Resolve bsc#1081327.
+
+-------------------------------------------------------------------
 Wed Oct  5 14:20:48 UTC 2016 - hguo@suse.com
 
 - Control hana-firewall service state in set_state function.

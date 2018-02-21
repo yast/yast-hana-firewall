@@ -19,6 +19,8 @@
 require 'yast'
 require 'ui/dialog'
 require 'hanafirewall/hanafirewall_conf'
+require 'yast2/systemd_unit'
+
 Yast.import 'UI'
 Yast.import 'Icon'
 Yast.import 'Label'
@@ -42,35 +44,24 @@ module HANAFirewall
             UI.OpenDialog(Opt(:decoreated, :defaultsize), VBox(
                 Left(HBox(
                     Icon::Simple('yast-firewall'),
-                    Heading(_('SAP HANA Firewall Configuration')),
+                    Heading(_('Firewall Service-Zone Assignment For HANA')),
                 )),
                 VBox(
                     # On top there are daemon controls and label showing HANA instance names
                     VSpacing(1.0),
-                    # In centre there is the configuration editor
-                    VBox(
-                        HBox(
-                            # Available remaining services and manual entry
-                            VBox(
-                                Left(Frame(_('Global Options'), VBox(
-                                    Left(CheckBox(Id(:enable_fw), _('Enable Firewall'), HANAFirewallConfInst.state)),
-                                    Left(CheckBox(Id(:open_ssh), Opt(:notify), _('Allow Remote Shell Access (SSH)'), HANAFirewallConfInst.open_ssh)),
-                                ))),
-                                HWeight(40, SelectionBox(Id(:avail_svc), _('All HANA services:'))),
-                                Left(Label(_("Other service and CIDR (example: https:10.0.0.0/8):"))),
-                                HBox(
-                                    InputField(Id(:manual_svc), Opt(:hstretch), ""),
-                                    PushButton(Id(:add_manual_svc), _("Add →"))
-                                )
-                            ),
-                            # Add/remove
-                            HWeight(10, VBox(PushButton(Id(:add_svc), _('→')), PushButton(Id(:del_svc), _('←')))),
-                            # Selected services
-                            HWeight(40, VBox(
-                                Left(ComboBox(Id(:ifaces), Opt(:notify), _('Allowed Services on Network Interface'), [])),
-                                SelectionBox(Id(:selected_svc), _('Open ports for these services:'))
-                            )),
-                        )
+                    HBox(
+                        VBox(
+                            Left(Frame(_('Global Options'), VBox(
+                                Left(CheckBox(Id(:reload), _('Enable and reload firewalld'), false)),
+                                Left(InputField(Id(:inst_numbers), _('Instance numbers'), get_inst_numbers.join(' '))),
+                            ))),
+                            SelectionBox(Id(:avail_svcs), _('Services:')),
+                        ),
+                        VBox(PushButton(Id(:add_svc), _('→')), PushButton(Id(:del_svc), _('←'))),
+                        VBox(
+                            Left(ComboBox(Id(:zones), Opt(:notify), _('Zone'), [])),
+                            SelectionBox(Id(:selected_svcs), _(''))
+                        ),
                     ),
                 ),
                 HBox(
@@ -84,61 +75,29 @@ module HANAFirewall
 
             # Install firewall package
             package_present = Package.Installed('HANA-Firewall')
-            if !package_present && Popup.YesNo(_('HANA-Firewall eases the task of setting up network firewall for SAP HANA instances.
-Would you like to install and use it now?')) && Package.DoInstall(['HANA-Firewall'])
+            if !package_present && Popup.YesNo(_('Install HANA-Firewall package?')) && Package.DoInstall(['HANA-Firewall'])
                 package_present = true
             end
             if !package_present
                 return :finish_dialog
             end
 
-            # Load configuration for the first interface
-            eligible_ifaces = HANAFirewallConfInst.eligible_ifaces
-            if eligible_ifaces.length == 0
-                Popup.Error(_('Cannot find any network interface that can participate in firewall configuration.
-Please check system network configuration.'))
+            # Load current service assignment
+            @zone_services = get_zone_services
+
+            if @zone_services.empty?
+                Popup.Error(_('Firewalld configuration is empty. Please set up firewalld before visiting this program.'))
                 return :finish_dialog
             end
-            UI.ChangeWidget(Id(:ifaces), :Items, eligible_ifaces)
 
-            # If none of the configured HANA instance names exists, then propose to generate a new configuration automatically.
-            existing_sys = HANAFirewallConfInst.hana_instance_names
-            if HANAFirewallConfInst.hana_sys.length == 0 || existing_sys.any? {|sys| !HANAFirewallConfInst.hana_sys.include?(sys)}
-                gen_conf = HANAFirewallConfInst.gen_config
-                if gen_conf[:hana_sys].length == 0
-                    # HANA is not installed
-                    Popup.Error(_('Cannot find an installed SAP HANA. Please install SAP HANA and then re-visit this firewall.'))
-                    return :finish_dialog
-                end
-                if gen_conf[:new_svcs].length > 0
-                    # The configuration generator discovered new services, prompt user for approval.
-                    prompt = _("The following configuration is automatically generated for this system:\n\n")
-                    prompt += _("SAP HANA instances:\n")
-                    prompt += gen_conf[:hana_sys].sort.map{|x| ' - ' + x}.join("\n")
-                    prompt += _("\nFirewalled network interfaces:\n")
-                    prompt += gen_conf[:ifaces].keys.sort.map{|x| ' - ' + x}.join("\n")
-                    prompt += _("\nThese services will be allowed on the network interfaces:\n")
-                    prompt += gen_conf[:new_svcs].sort.map{|x| ' - ' + x}.join("\n")
-                    prompt += _("\n\nDo you agree with the proposal? If not, you can still set up the firewall manually.")
-                    if Popup.YesNo(prompt)
-                        HANAFirewallConfInst.hana_sys = gen_conf[:hana_sys]
-                        HANAFirewallConfInst.ifaces = gen_conf[:ifaces]
-                    end
-                end
-            end
-            # If some of the HANA instance names are missing, prompt user to add them
-            missing_sys = HANAFirewallConfInst.hana_instance_names - HANAFirewallConfInst.hana_sys
-            if missing_sys.length > 0
-                if Popup.YesNo(
-                    _("The following SAP HANA instances do not yet participate in the firewall setup:\n") +
-                    missing_sys.sort.map{|x| ' - ' + x}.join("\n") +
-                    _("\n\nWould you like to use firewall on those instances as well?")
-                )
-                    HANAFirewallConfInst.hana_sys += missing_sys
-                end
-            end
+            # Put zone names into drop down
+            UI.ChangeWidget(Id(:zones), :Items, @zone_services.keys.sort)
 
-            refresh_lists
+            # Pre-select the first zone
+            UI.ChangeWidget(Id(:selected_svcs), :Value, @zone_services.keys.sort[0])
+
+            # Load service list
+            load_for_selected_zone
 
             # Begin the event loop
             begin
@@ -149,88 +108,52 @@ Please check system network configuration.'))
             return :finish_dialog
         end
 
-        # Load service lists.
-        def refresh_lists
-            iface_name = UI.QueryWidget(Id(:ifaces), :Value)
-            selected_svc_hash = HANAFirewallConfInst.ifaces.fetch(iface_name, {})
-            selected_svc_list = selected_svc_hash.map{|name, cidr|
-                # Display CIDR only if it is not 0.0.0.0/0
-                if cidr == '0.0.0.0/0'
-                    name
-                else
-                    "#{name}:#{cidr}"
-                end
-            }
-            avail_svcs = ServiceDefinitionsInst.hana_svcs.keys - selected_svc_hash.keys
-            UI.ChangeWidget(Id(:avail_svc), :Items, avail_svcs.sort)
-            UI.ChangeWidget(Id(:selected_svc), :Items, selected_svc_list.sort)
+        # Load service list for the currently selected zone name.
+        def load_for_selected_zone
+            zone_name = UI.QueryWidget(Id(:zones), :Value)
+            zone_svcs = @zone_services[zone_name]
+            hana_svcs = get_service_names
+            selected_svcs = zone_svcs & hana_svcs
+            avail_svcs = hana_svcs - selected_svcs
+
+            UI.ChangeWidget(Id(:avail_svcs), :Items, avail_svcs.sort)
+            UI.ChangeWidget(Id(:selected_svcs), :Items, selected_svcs.sort)
             UI.RecalcLayout
         end
 
         def event_loop
             loop do
                 case UI.UserInput
-                    when :open_ssh
-                        open_ssh = UI.QueryWidget(Id(:open_ssh), :Value)
-                        if open_ssh && !Popup.ContinueCancel(_('"Allow Remote Shell Access" will open SSH access on all network interfaces, is this really intentional?'))
-                            UI.ChangeWidget(Id(:open_ssh), :Value, false)
-                            redo
-                        end
-                        HANAFirewallConfInst.open_ssh = open_ssh
                     when :ok
-                        HANAFirewallConfInst.save_config
-                        success, out = HANAFirewallConfInst.set_state(UI.QueryWidget(Id(:enable_fw), :Value))
-                        if success
-                            Popup.Message(_('HANA firewall configuration has been saved successfully.'))
-                        else
-                            Popup.ErrorDetails(_('Firewall configuration failed to apply.'), out)
+                        set_inst_numbers(UI.QueryWidget(Id(:inst_numbers), :Value).strip.split(/\s+/))
+                        regen_svcs
+                        ::Y2Firewall::Firewalld.instance.write
+                        if UI.QueryWidget(Id(:reload), :Value)
+                            ::Yast::SystemdUnit.new('firewalld.service').restart
                         end
                         return
-                    when :ifaces
-                        refresh_lists
+                    when :zones
+                        load_for_selected_zone
                     when :add_svc
-                        svc = UI.QueryWidget(Id(:avail_svc), :CurrentItem)
-                        iface_name = UI.QueryWidget(Id(:ifaces), :Value)
-                        if svc
-                            HANAFirewallConfInst.ifaces[iface_name] = HANAFirewallConfInst.ifaces.fetch(iface_name, {}).merge({svc => '0.0.0.0/0'})
-                            refresh_lists
+                        svc = UI.QueryWidget(Id(:avail_svcs), :CurrentItem)
+                        zone_name = UI.QueryWidget(Id(:zones), :Value)
+                        if svc and zone_name
+                            @zone_services[zone_name] += [svc]
+                            ::Y2Firewall::Firewalld.instance.zones.find{ |z| z.name == zone_name}.services += [svc]
+                            load_for_selected_zone
                         end
                     when :del_svc
-                        # Some services are listed in notation <name>:<cidr>
-                        svc = UI.QueryWidget(Id(:selected_svc), :CurrentItem).to_s.split(/:/)
-                        iface_name = UI.QueryWidget(Id(:ifaces), :Value)
-                        HANAFirewallConfInst.ifaces[iface_name].delete(svc[0])
-                        refresh_lists
-                    when :add_manual_svc
-                        # Validations
-                        input = UI.QueryWidget(Id(:manual_svc), :Value).to_s.strip
-                        if input == ''
-                            redo
+                        svc = UI.QueryWidget(Id(:selected_svcs), :CurrentItem)
+                        zone_name = UI.QueryWidget(Id(:zones), :Value)
+                        if svc and zone_name
+                            @zone_services[zone_name] -= [svc]
+                            ::Y2Firewall::Firewalld.instance.zones.find{ |z| z.name == zone_name}.services -= [svc]
+                            load_for_selected_zone
                         end
-                        svc_cidr = input.split(/:/)
-                        if svc_cidr.length != 2
-                            Popup.Error(_("Please enter service name and CIDR in form: service_name:CIDR_block"))
-                            redo
-                        end
-                        if !ServiceDefinitionsInst.std_svcs.include?(svc_cidr[0])
-                            Popup.Error(_("The service name does not seem to be valid.\n" +
-                                "Please read /etc/services for a list of available service names."))
-                            redo
-                        end
-                        # Add to list
-                        iface_name = UI.QueryWidget(Id(:ifaces), :Value)
-                        HANAFirewallConfInst.ifaces[iface_name] = HANAFirewallConfInst.ifaces.fetch(iface_name, {}).merge({svc_cidr[0] => svc_cidr[1]})
-                        UI.ChangeWidget(Id(:manual_svc), :Value, '')
-                        refresh_lists
                     when :help
-                        Popup.LongMessageGeometry(_("HANA firewall works on top of SUSE firewall, to help securing your network traffic." +
-"Any service that you allow on HANA firewall will override the decision of SUSE firewall.<br/><br/>" +
-"Please enter HANA network interface names and choose allowed services for each network interface.<br/>" +
-"If you are adding other services, you can find a complete list of service names in \"/etc/services\" file.<br/><br/>" +
-"You may also administrate HANA firewall using command \"hana-firewall\"." +
-"See \"man 8 hana-firewall\" for more information on HANA firewall administration.<br/><br/>" +
-"Please note that the pre-defined HANA services are only for single-tenant HANA installation." +
-"If you have a multi-tenant HANA installation, please define HANA application services by calling /etc/hana-firewall.d/create_new_service and then re-visit this module."
+                        Popup.LongMessageGeometry(_("HANA firewall is not an independent firewall! It is a utility for firewalld.
+The command line tool generates firewalld service definitions, and this graphical tool assigns those services to zones.
+You must use firewalld controls (such as firewall-cmd command line) to manipulate the actual firewall setup, such as interface assignment."
 ), 60, 16)
                     when :cancel
                         return
