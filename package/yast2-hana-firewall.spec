@@ -16,10 +16,10 @@
 #
 
 Name:           yast2-hana-firewall
-Version:        1.1.5
+Version:        2.0.0
 Release:        0
 License:        GPL-3.0
-Summary:        An alternative interface for configuring HANA-Firewall
+Summary:        Assign HANA firewall services to zones
 Url:            https://www.suse.com/products/sles-for-sap
 Group:          System/YaST
 Source:         %{name}-%{version}.tar.bz2
@@ -30,9 +30,7 @@ BuildRequires:  netcfg HANA-Firewall
 Requires:       yast2
 
 %description
-This is a configuration editor for HANA-Firewall.
-It works in both stand-alone and AutoYast mode to automatically configure
-HANA-Firewall and control its state.
+A utility for assigning HANA firewall services to firewalld zones.
 
 %prep
 %setup -q
@@ -50,7 +48,6 @@ rake install DESTDIR="%{buildroot}"
 %doc %yast_docdir/
 %yast_desktopdir/hana-firewall*
 %yast_clientdir/hanafirewall*
-%yast_clientdir/hana-firewall*
 %yast_libdir/hanafirewall*
 
 %changelog

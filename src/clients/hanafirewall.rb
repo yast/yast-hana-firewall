@@ -20,5 +20,4 @@ require 'hanafirewall/hanafirewall_conf'
 require 'hanafirewallui/main_dialog'
 
 include HANAFirewall
-HANAFirewallConfInst.load(IO.read('/etc/sysconfig/hana-firewall'))
 MainDialog.new.run
