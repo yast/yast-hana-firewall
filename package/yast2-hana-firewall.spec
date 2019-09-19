@@ -16,7 +16,7 @@
 #
 
 Name:           yast2-hana-firewall
-Version:        2.0.0
+Version:        2.0.1
 Release:        0
 License:        GPL-3.0
 Summary:        Assign HANA firewall services to zones
@@ -28,6 +28,7 @@ BuildRequires:  rubygem(yast-rake) rubygem(rspec)
 # These dependencies are for running test cases
 BuildRequires:  netcfg HANA-Firewall
 Requires:       yast2
+ExclusiveArch:  x86_64 ppc64le
 
 %description
 A utility for assigning HANA firewall services to firewalld zones.
