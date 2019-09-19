@@ -19,7 +19,12 @@
 require 'yast'
 require 'ui/dialog'
 require 'hanafirewall/hanafirewall_conf'
-require 'yast2/systemd_unit'
+
+begin
+  require 'yast2/systemd/unit'
+rescue LoadError
+  require 'yast2/systemd_unit'
+end
 
 Yast.import 'UI'
 Yast.import 'Icon'
