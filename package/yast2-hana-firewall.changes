@@ -1,8 +1,8 @@
 -------------------------------------------------------------------
 Thu Sep 19 13:02:12 UTC 2019 - Peter Varkoly <varkoly@suse.com>
 
-- bsc#1146220 L3: Yast2 > HA Setup for SAP Products Crashes 
- with "cannot import namespace 'SystemdService'" 
+- bsc#1146220 L3: Yast2 > HA Setup for SAP Products Crashes
+  with "cannot import namespace 'SystemdService'"
 - 2.0.1
 
 -------------------------------------------------------------------
@@ -10,6 +10,13 @@ Fri Mar  2 11:06:58 UTC 2018 - hguo@suse.com
 
 - Upgrade to upstream release 2.0.0 that enables user to assign
   services to firewall zones. Resolve bsc#1081327.
+
+-------------------------------------------------------------------
+Thu Oct 26 13:58:55 UTC 2017 - hguo@suse.com
+
+- Temporarily remove test case while the usefulness of this package
+  is being evaluated.
+- Build exclusively on 64-bit X86 and PPC, just like HANA-Firewall.
 
 -------------------------------------------------------------------
 Wed Oct  5 14:20:48 UTC 2016 - hguo@suse.com
