@@ -14,17 +14,25 @@
 # this program; if not, contact SUSE Linux GmbH.
 #
 # ------------------------------------------------------------------------------
-# Author: Howard Guo <hguo@suse.com>
+# Author: Peter Varkoly <varkoly@suse.com>
 
 require 'yast'
 require 'ui/dialog'
 require 'hanafirewall/hanafirewall_conf'
 
+# In yast2 4.1.3 a reorganization of the YaST systemd library was introduced. When running on an
+# older version, just fall back to the old SystemdService module (bsc#1146220).
 begin
-  require 'yast2/systemd/unit'
+  require 'yast2/systemd/service'
 rescue LoadError
-  require 'yast2/systemd_unit'
+  Yast.import 'SystemdService'
 end
+
+#begin
+#  require 'yast2/systemd/unit'
+#rescue LoadError
+#  require 'yast2/systemd_unit'
+#end
 
 Yast.import 'UI'
 Yast.import 'Icon'
@@ -134,7 +142,7 @@ module HANAFirewall
                         regen_svcs
                         ::Y2Firewall::Firewalld.instance.write
                         if UI.QueryWidget(Id(:reload), :Value)
-                            ::Yast::SystemdUnit.new('firewalld.service').restart
+                            restart_service('firewalld')
                         end
                         return
                     when :zones
@@ -165,5 +173,14 @@ You must use firewalld controls (such as firewall-cmd command line) to manipulat
                 end
             end
         end
+
+	private
+
+        def restart_service(name)
+            service_api = defined?(Yast2::Systemd::Service) ? Yast2::Systemd::Service : Yast::SystemdService
+            service = service_api.find!(name)
+	    service.send(:restart)
+        end
+
     end
 end
