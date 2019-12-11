@@ -14,7 +14,6 @@
 # this program; if not, contact SUSE Linux GmbH.
 #
 # ------------------------------------------------------------------------------
-# Author: Howard Guo <hguo@suse.com>
 # Author: Peter Varkoly <varkoly@suse.com>
 
 require 'yast'
