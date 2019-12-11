@@ -16,7 +16,7 @@
 #
 
 Name:           yast2-hana-firewall
-Version:        2.0.2
+Version:        2.0.3
 Release:        0
 License:        GPL-3.0
 Summary:        Assign HANA firewall services to zones
