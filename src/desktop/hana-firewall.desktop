@@ -14,6 +14,7 @@
 #
 # ------------------------------------------------------------------------------
 # Author: Howard Guo <hguo@suse.com>
+# Author: Peter Varkoly <varkoly@suse.com>
 [Desktop Entry]
 Type=Application
 Categories=Settings;System;Qt;X-SuSE-YaST;X-SuSE-YaST-Security;

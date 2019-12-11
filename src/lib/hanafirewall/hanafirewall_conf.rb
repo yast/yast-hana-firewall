@@ -15,6 +15,7 @@
 #
 # ------------------------------------------------------------------------------
 # Author: Howard Guo <hguo@suse.com>
+# Author: Peter Varkoly <varkoly@suse.com>
 
 require 'yast'
 require 'open3'

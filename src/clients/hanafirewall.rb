@@ -15,6 +15,7 @@
 #
 # ------------------------------------------------------------------------------
 # Author: Howard Guo <hguo@suse.com>
+# Author: Peter Varkoly <varkoly@suse.com>
 
 require 'hanafirewall/hanafirewall_conf'
 require 'hanafirewallui/main_dialog'

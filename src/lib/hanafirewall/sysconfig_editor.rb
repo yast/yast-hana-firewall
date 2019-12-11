@@ -15,8 +15,10 @@
 #
 # ------------------------------------------------------------------------------
 # Author: Howard Guo <hguo@suse.com>
+# Author: Peter Varkoly <varkoly@suse.com>
 
 require 'yast'
+require "yast/i18n"
 require 'open3'
 require 'pathname'
 
@@ -28,6 +30,7 @@ module HANAFirewall
     # Specially tailored for HANA firewall.
     class SysconfigEditor
         def initialize(text)
+            textdomain 'hanafirewall'
             @lines = text.b.split("\n")
         end
 
