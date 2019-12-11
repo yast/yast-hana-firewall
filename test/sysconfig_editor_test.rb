@@ -15,7 +15,7 @@
 #
 # ------------------------------------------------------------------------------
 #
-# Authors: Howard Guo <hguo@suse.com>
+# Authors: Peter Varkoly <varkoly@suse.com>
 
 ENV['Y2DIR'] = File.expand_path('../../src', __FILE__)
 
