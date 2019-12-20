@@ -25,7 +25,7 @@ Yast.import "Service"
 
 module HANAFirewall
   # A smart sysconfig file editor that not only can handle key-value but also arrays.
-  # Array is identified by a key with _{number} suffix.
+  # Array is identified by a key with `_{number}` suffix.
   # Specially tailored for HANA firewall.
   class SysconfigEditor
     include Yast::I18n
