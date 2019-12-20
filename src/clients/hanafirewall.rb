@@ -1,4 +1,3 @@
-# encoding: utf-8
 # ------------------------------------------------------------------------------
 # Copyright (c) 2016 SUSE LINUX GmbH, Nuernberg, Germany.
 #
@@ -17,8 +16,6 @@
 # Author: Howard Guo <hguo@suse.com>
 # Author: Peter Varkoly <varkoly@suse.com>
 
-require 'hanafirewall/hanafirewall_conf'
-require 'hanafirewallui/main_dialog'
+require "hanafirewallui/main_dialog"
 
-include HANAFirewall
-MainDialog.new.run
+HANAFirewall::MainDialog.new.run
