@@ -1,3 +1,6 @@
 y2signal.log
 package/*.tar.bz2
 .idea
+/.yardoc
+/doc/autodocs
+*.pot

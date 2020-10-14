@@ -47,6 +47,9 @@ Metrics/PerceivedComplexity:
 Naming/MethodName:
   Enabled: false
 
+Naming/AccessorMethodName:
+  Enabled: false
+
 # very inconsistent params in old API
 Naming/UncommunicativeMethodParamName:
   Enabled: false

@@ -17,14 +17,11 @@
 # Authors: Howard Guo <hguo@suse.com>
 # Authors: Peter Varkoly <varkoly@suse.com>
 
-ENV['Y2DIR'] = File.expand_path('../../src', __FILE__)
+ENV["Y2DIR"] = File.expand_path("../src", __dir__)
 
-require 'yast'
-require 'yast/rspec'
-require 'hanafirewall/sysconfig_editor'
-
-include Yast
-include HANAFirewall
+require "yast"
+require "yast/rspec"
+require "hanafirewall/sysconfig_editor"
 
 sample_conf = '
 # this is a comment
@@ -48,91 +45,91 @@ ghi=789
 # yadi yadi yada
 '
 
-describe SysconfigEditor do
-    sysconf = nil
-    it 'Parse input file' do
-        sysconf = SysconfigEditor.new(sample_conf)
-        expect(sysconf.keys.length).to eq(5)
-    end
+describe HANAFirewall::SysconfigEditor do
+  sysconf = nil
+  it "Parse input file" do
+    sysconf = HANAFirewall::SysconfigEditor.new(sample_conf)
+    expect(sysconf.keys.length).to eq(5)
+  end
 
-    it 'Get ordinary values' do
-        expect(sysconf.get('ABC123')).to eq('foo123')
-        expect(sysconf.get('DEF456')).to eq('bar456')
-        expect(sysconf.get('ghi')).to eq('789')
-        expect(sysconf.get('ARY')).to eq('')
-        expect(sysconf.get('ARY_')).to eq('')
-    end
+  it "Get ordinary values" do
+    expect(sysconf.get("ABC123")).to eq("foo123")
+    expect(sysconf.get("DEF456")).to eq("bar456")
+    expect(sysconf.get("ghi")).to eq("789")
+    expect(sysconf.get("ARY")).to eq("")
+    expect(sysconf.get("ARY_")).to eq("")
+  end
 
-    it 'Set ordinary values' do
-        expect(sysconf.set('ABC123', 'foo')).to eq(true)
-        expect(sysconf.set('DEF456', 'bar')).to eq(true)
-        expect(sysconf.set('newkey', 'baz')).to eq(false)
+  it "Set ordinary values" do
+    expect(sysconf.set("ABC123", "foo")).to eq(true)
+    expect(sysconf.set("DEF456", "bar")).to eq(true)
+    expect(sysconf.set("newkey", "baz")).to eq(false)
 
-        expect(sysconf.get('ABC123')).to eq('foo')
-        expect(sysconf.get('DEF456')).to eq('bar')
-        expect(sysconf.get('newkey')).to eq('baz')
-    end
+    expect(sysconf.get("ABC123")).to eq("foo")
+    expect(sysconf.get("DEF456")).to eq("bar")
+    expect(sysconf.get("newkey")).to eq("baz")
+  end
 
-    it 'Seek in arrays' do
-        expect(sysconf.array_len('does_not_exist')).to eq(0)
-        expect(sysconf.array_len('SEQ')).to eq(3)
-        expect(sysconf.array_get('SEQ', 0)).to eq('a')
-        expect(sysconf.array_get('SEQ', 1)).to eq('')
-        expect(sysconf.array_get('SEQ', 2)).to eq('c')
-        expect(sysconf.array_len('ARY')).to eq(7)
-        expect(sysconf.array_get('ARY', 0)).to eq('a')
-        expect(sysconf.array_get('ARY', 1)).to eq('b')
-        expect(sysconf.array_get('ARY', 2)).to eq('c')
-        expect(sysconf.array_get('ARY', 3)).to eq('d')
-        expect(sysconf.array_get('ARY', 6)).to eq('g')
-    end
+  it "Seek in arrays" do
+    expect(sysconf.array_len("does_not_exist")).to eq(0)
+    expect(sysconf.array_len("SEQ")).to eq(3)
+    expect(sysconf.array_get("SEQ", 0)).to eq("a")
+    expect(sysconf.array_get("SEQ", 1)).to eq("")
+    expect(sysconf.array_get("SEQ", 2)).to eq("c")
+    expect(sysconf.array_len("ARY")).to eq(7)
+    expect(sysconf.array_get("ARY", 0)).to eq("a")
+    expect(sysconf.array_get("ARY", 1)).to eq("b")
+    expect(sysconf.array_get("ARY", 2)).to eq("c")
+    expect(sysconf.array_get("ARY", 3)).to eq("d")
+    expect(sysconf.array_get("ARY", 6)).to eq("g")
+  end
 
-    it 'Set in arrays' do
-        expect(sysconf.array_set('ARY', 6, 'gggg')).to eq(true)
-        expect(sysconf.array_set('ARY', 9, 'test')).to eq(false)
-    end
+  it "Set in arrays" do
+    expect(sysconf.array_set("ARY", 6, "gggg")).to eq(true)
+    expect(sysconf.array_set("ARY", 9, "test")).to eq(false)
+  end
 
-    it 'Resize arrays' do
-        # Not resizing
-        sysconf.array_resize('SEQ', 3)
-        expect(sysconf.array_len('SEQ')).to eq(3)
-        expect(sysconf.array_get('SEQ', 0)).to eq('a')
-        expect(sysconf.array_get('SEQ', 1)).to eq('')
-        expect(sysconf.array_get('SEQ', 2)).to eq('c')
-        expect(sysconf.array_get('SEQ', 3)).to eq('')
+  it "Resize arrays" do
+    # Not resizing
+    sysconf.array_resize("SEQ", 3)
+    expect(sysconf.array_len("SEQ")).to eq(3)
+    expect(sysconf.array_get("SEQ", 0)).to eq("a")
+    expect(sysconf.array_get("SEQ", 1)).to eq("")
+    expect(sysconf.array_get("SEQ", 2)).to eq("c")
+    expect(sysconf.array_get("SEQ", 3)).to eq("")
 
-        # Enlarge
-        sysconf.array_resize('SEQ', 5)
-        expect(sysconf.array_len('SEQ')).to eq(5)
-        expect(sysconf.array_get('SEQ', 0)).to eq('a')
-        expect(sysconf.array_get('SEQ', 1)).to eq('')
-        expect(sysconf.array_get('SEQ', 2)).to eq('c')
-        expect(sysconf.array_get('SEQ', 3)).to eq('')
-        expect(sysconf.array_get('SEQ', 4)).to eq('')
-        expect(sysconf.array_get('SEQ', 5)).to eq('')
+    # Enlarge
+    sysconf.array_resize("SEQ", 5)
+    expect(sysconf.array_len("SEQ")).to eq(5)
+    expect(sysconf.array_get("SEQ", 0)).to eq("a")
+    expect(sysconf.array_get("SEQ", 1)).to eq("")
+    expect(sysconf.array_get("SEQ", 2)).to eq("c")
+    expect(sysconf.array_get("SEQ", 3)).to eq("")
+    expect(sysconf.array_get("SEQ", 4)).to eq("")
+    expect(sysconf.array_get("SEQ", 5)).to eq("")
 
-        # Shrink
-        sysconf.array_resize('SEQ', 2)
-        expect(sysconf.array_len('SEQ')).to eq(1)
-        expect(sysconf.array_get('SEQ', 0)).to eq('a')
-        expect(sysconf.array_get('SEQ', 1)).to eq('')
-        expect(sysconf.array_get('SEQ', 2)).to eq('')
+    # Shrink
+    sysconf.array_resize("SEQ", 2)
+    expect(sysconf.array_len("SEQ")).to eq(1)
+    expect(sysconf.array_get("SEQ", 0)).to eq("a")
+    expect(sysconf.array_get("SEQ", 1)).to eq("")
+    expect(sysconf.array_get("SEQ", 2)).to eq("")
 
-        # Erase
-        sysconf.array_resize('SEQ', 0)
-        expect(sysconf.array_len('SEQ')).to eq(0)
-        expect(sysconf.array_get('SEQ', 0)).to eq('')
+    # Erase
+    sysconf.array_resize("SEQ", 0)
+    expect(sysconf.array_len("SEQ")).to eq(0)
+    expect(sysconf.array_get("SEQ", 0)).to eq("")
 
-        # Create new array
-        sysconf.array_resize('new_array', 3)
-        expect(sysconf.array_len('new_array')).to eq(3)
-        expect(sysconf.array_get('new_array', 0)).to eq('')
-        expect(sysconf.array_get('new_array', 1)).to eq('')
-        expect(sysconf.array_get('new_array', 2)).to eq('')
-    end
+    # Create new array
+    sysconf.array_resize("new_array", 3)
+    expect(sysconf.array_len("new_array")).to eq(3)
+    expect(sysconf.array_get("new_array", 0)).to eq("")
+    expect(sysconf.array_get("new_array", 1)).to eq("")
+    expect(sysconf.array_get("new_array", 2)).to eq("")
+  end
 
-    it 'Convert back to text' do
-        expect(sysconf.to_text).to eq ('
+  it "Convert back to text" do
+    expect(sysconf.to_text).to eq '
 # this is a comment
 
 ABC123="foo"
@@ -155,6 +152,6 @@ ARY_9="test"
 new_array_0=""
 new_array_1=""
 new_array_2=""
-')
-    end
+'
+  end
 end
