@@ -47,6 +47,7 @@ module HANAFirewall
         include UIShortcuts
         include I18n
         include Logger
+	include HANAFirewall
 
         def initialize
             textdomain 'hanafirewall'
