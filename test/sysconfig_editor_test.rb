@@ -17,10 +17,8 @@
 # Authors: Howard Guo <hguo@suse.com>
 # Authors: Peter Varkoly <varkoly@suse.com>
 
-ENV["Y2DIR"] = File.expand_path("../src", __dir__)
+require_relative "test_helper"
 
-require "yast"
-require "yast/rspec"
 require "hanafirewall/sysconfig_editor"
 
 sample_conf = '

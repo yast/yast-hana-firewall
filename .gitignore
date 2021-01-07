@@ -4,3 +4,4 @@ package/*.tar.bz2
 /.yardoc
 /doc/autodocs
 *.pot
+coverage
