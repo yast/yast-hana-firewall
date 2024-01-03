@@ -63,11 +63,9 @@ module HANAFirewall
   # get_zone_services returns all zone names and their corresponding service names.
   def get_zone_services
     ::Y2Firewall::Firewalld.instance.read
-    Hash[
-        ::Y2Firewall::Firewalld.instance.zones.map do |zone|
-          [zone.name, zone.services]
-        end
-    ]
+    ::Y2Firewall::Firewalld.instance.zones.map do |zone|
+      [zone.name, zone.services]
+    end.to_h
   end
 
   # call the command line program to regenerate service definition files.

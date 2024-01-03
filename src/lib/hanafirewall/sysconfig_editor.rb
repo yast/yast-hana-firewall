@@ -159,12 +159,12 @@ module HANAFirewall
         param = nil
         # Test against array key
         array_kiv = /^([A-Za-z0-9_]+)_([0-9])+="?([^"]*)"?$/.match(line)
-        if !array_kiv.nil?
-          param = [array_kiv[1], array_kiv[2].to_i, array_kiv[3]]
-        else
+        if array_kiv.nil?
           # Test against ordinary key
           kv = /^([A-Za-z0-9_]+)="?([^"]*)"?$/.match(line)
           param = [kv[1], :nil, kv[2]] if !kv.nil?
+        else
+          param = [array_kiv[1], array_kiv[2].to_i, array_kiv[3]]
         end
         next unless !param.nil? && key_regex.match(param[0])
 
