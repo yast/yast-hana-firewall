@@ -35,9 +35,7 @@ module HANAFirewall
       short_name = ""
       file_name.each_codepoint do |c|
         short_name += case c.chr
-        when /\p{L}/
-          c.chr
-        when /\p{N}/
+        when /\p{L}/, /\p{N}/
           c.chr
         else
           "-"
