@@ -110,7 +110,7 @@ module HANAFirewall
 
       if @zone_services.empty?
         Popup.Error(_("Firewalld configuration is empty. Please set up firewalld " \
-          "before visiting this program."))
+                      "before visiting this program."))
         return :finish_dialog
       end
 

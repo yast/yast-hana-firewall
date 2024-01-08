@@ -34,9 +34,8 @@ module HANAFirewall
       # write '-' for other characters, and convert the whole string into lower case.
       short_name = ""
       file_name.each_codepoint do |c|
-        short_name += if /\p{L}/.match(c.chr)
-          c.chr
-        elsif /\p{N}/.match(c.chr)
+        short_name += case c.chr
+        when /\p{L}/, /\p{N}/
           c.chr
         else
           "-"
@@ -48,26 +47,24 @@ module HANAFirewall
 
   # get_inst_numbers retrieves the string array value from HANA_INSTANCE_NUMBERS configuration key.
   def get_inst_numbers
-    HANAFirewall::SysconfigEditor.new(IO.read("/etc/sysconfig/hana-firewall"))
+    HANAFirewall::SysconfigEditor.new(File.read("/etc/sysconfig/hana-firewall"))
       .get("HANA_INSTANCE_NUMBERS").split(/\s+/)
   end
 
   # set_inst_numbers writes down a new string array value into
   # HANA_INSTANCE_NUMBERS configuration key.
   def set_inst_numbers(new_array)
-    conf = HANAFirewall::SysconfigEditor.new(IO.read("/etc/sysconfig/hana-firewall"))
+    conf = HANAFirewall::SysconfigEditor.new(File.read("/etc/sysconfig/hana-firewall"))
     conf.set("HANA_INSTANCE_NUMBERS", new_array.sort.join(" "))
-    IO.write("/etc/sysconfig/hana-firewall", conf.to_text)
+    File.write("/etc/sysconfig/hana-firewall", conf.to_text)
   end
 
   # get_zone_services returns all zone names and their corresponding service names.
   def get_zone_services
     ::Y2Firewall::Firewalld.instance.read
-    Hash[
-        ::Y2Firewall::Firewalld.instance.zones.map do |zone|
-          [zone.name, zone.services]
-        end
-    ]
+    ::Y2Firewall::Firewalld.instance.zones.map do |zone|
+      [zone.name, zone.services]
+    end.to_h
   end
 
   # call the command line program to regenerate service definition files.
